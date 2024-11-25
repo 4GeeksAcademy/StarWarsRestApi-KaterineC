@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
+from models import db, User, Planet, Character, Favorite
 #from models import Person
 
 app = Flask(__name__)
@@ -39,11 +39,93 @@ def sitemap():
 @app.route('/user', methods=['GET'])
 def handle_hello():
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
+    usuarios=User.query.all()
+    if usuarios== []:
+        return jsonify({"msg":"No existen usuarios"}), 404
+    response_body=[item.serialize() for item in usuarios]
 
     return jsonify(response_body), 200
+
+@app.route('/user/<int:user_id', method=['GET'])
+def get_user_id(user_id):
+    user=User.query.filter_by(id=user_id).first()
+    if user is None:
+        return jsonify({"msg": "No existe el usuario"}), 404
+    return jsonify(user.serialize()),200
+
+
+@app.route('/character', method=['GET'])
+def get_character():
+    personajes=Character.query.all()
+    if personajes == []:
+        return jsonify({"msg": "No existen personajes"}), 404
+    response_body= [item.serialize() for item in personajes]
+
+    return jsonify(response_body),200
+
+
+@app.route('/character/<int:character_id>', methods=['GET'])
+def get_character_id(character_id):
+    personaje=Character.query.filter_by(id=character_id).first()
+    if personaje is None:
+        return jsonify({"msg":"No existe el personaje"}),404
+    return jsonify(personaje.serialize()),200
+
+
+@app.route('/planet', methods=['GET'])
+def get_planets():
+    planetas=Planet.query.all()
+    if planetas == []:
+        return jsonify({"msg":"No existen planetas"}),404
+    response_body = [item.serialize() for item in planetas]
+    return jsonify(response_body),200
+
+@app.route('/favorite', methods=['GET'])
+def get_favorite():
+    favoritos=Favorite.query.all()
+    if favoritos == []:
+        return jsonify({"msg":"No existen favoritos"}),404
+    response_body = [item.serialize() for item in favoritos]
+
+    return jsonify(response_body), 200
+
+
+@app.route('/favorite/int:favorite_id>', methods=['GET'])
+def get_favorite_id(favorite_id):
+    favorito= Favorite.query.filter_by(id=favorite_id).first()
+    if favorito is None:
+        return jsonify({"msg":"No existe el favorito"}),404
+    return jsonify(favorito.serialize()),200
+
+
+@app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
+def post_favorite_planet(planet_id):
+    body = request.json
+    email = body.get("email")
+
+    user = User.query.filter_by(email=email).one_or_none()
+    if user == None:
+        return jsonify({"msg":"No existe el usuario"}),404
+    
+
+    planeta = Planet.query.get(planet_id)
+    if planeta == None:
+        return jsonify({"msg":"No existe el planeta"}),404
+
+
+    new_favorite = Favorite()
+    new_favorite.user = user
+    new_favorite.planet = planeta
+
+    
+
+    return jsonify(), 200
+
+
+
+
+
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
